@@ -30,4 +30,6 @@ public interface CustomerService {
 
     int updateByPrimaryKey(Customer record);
 
+    //根据经纬度计算人民币
+    double getMoney(double gongSiLng, double gongSiLat, double customerLng, double customerLat);
 }

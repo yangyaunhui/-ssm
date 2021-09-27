@@ -4,12 +4,15 @@ import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.xiexin.bean.Customer;
 import com.xiexin.bean.CustomerExample;
+import com.xiexin.bean.dto.CustomerDTO;
 import com.xiexin.service.CustomerService;
 import com.xiexin.util.AliSMSUtil;
+import com.xiexin.util.JwtToToken;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import redis.clients.jedis.JedisPool;
 
+import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -72,9 +75,13 @@ public class CustomerController{
         //1.根据前端传来的手机号和验证码来和reddis中的数据做对比
         String redisCodeNum = jedisPool.getResource().get(phoneNum);//redis中的验证码
         if (codeNum.equals(redisCodeNum)){
-            //相等,登录成功
+            //相等,登录成功,需要返回给顾客一个jwt,同时把这个jwt放入到reids中
+            JwtToToken jwtToToken = new JwtToToken();
+            CustomerDTO jwt = jwtToToken.createJwt(phoneNum);//注意:无session主义,前后端分离,没有session
+            //使用它jwt,比较容易很轻松的做出单点登录,基于jwt+redis的单点登录
             codeMap.put("code",0);
             codeMap.put("msg","登录成功");
+            codeMap.put("data",jwt);
             return codeMap;
         }else{
             //不相等,登录失败
@@ -102,6 +109,27 @@ public class CustomerController{
             return codeMap;
         }
     }
+
+    @RequestMapping("/getMoney") //"/api/customer/getMoney"
+    public Map getMoney(double gongSiLng,double gongSiLat,double customerLng,double customerLat){
+        double money = customerService.getMoney(gongSiLng,gongSiLat,customerLng,customerLat);
+        //money应该是两位数的小数
+
+        DecimalFormat df = new DecimalFormat("#.##");
+        String format = df.format(money);
+        Map codeMap = new HashMap();
+        codeMap.put("code",0);
+        codeMap.put("msg","请求成功");
+        codeMap.put("data",format);
+        return codeMap;
+    }
+
+    public static void main(String[] args) {
+        double a = 100.2365;
+        DecimalFormat df = new DecimalFormat("#.##");
+        System.out.println(df.format(a));
+    }
+
 
     //增
 // 后端订单增加 -- 针对layui的 针对前端传 json序列化的
