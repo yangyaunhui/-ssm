@@ -79,6 +79,9 @@ public class CustomerController{
             JwtToToken jwtToToken = new JwtToToken();
             CustomerDTO jwt = jwtToToken.createJwt(phoneNum);//注意:无session主义,前后端分离,没有session
             //使用它jwt,比较容易很轻松的做出单点登录,基于jwt+redis的单点登录
+            //把token存入到reids当中
+            jedisPool.getResource().set( phoneNum+"token",jwt.getAccessToken());
+
             codeMap.put("code",0);
             codeMap.put("msg","登录成功");
             codeMap.put("data",jwt);
